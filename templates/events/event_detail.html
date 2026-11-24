@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+<article class="event">
+  {% if event.cover %}
+    <div class="event-cover"><img src="{% url 'events:cover' event.public_id %}" alt="Обкладинка події"></div>
+  {% endif %}
+
+  <div class="event-layout">
+    <div class="event-main">
+      <div class="event-tags">
+        {% if event.is_private %}<span class="tag tag-private">приватна подія</span>{% endif %}
+        {% if is_past %}<span class="tag">вже відбулась</span>{% endif %}
+      </div>
+      <h1 class="event-title">{{ event.title }}</h1>
+      <p class="event-author">Організатор: <strong>{{ event.author.name }}</strong></p>
+      {% if event.description %}
+        <div class="event-desc">{{ event.description|linebreaksbr }}</div>
+      {% endif %}
+
+      <section id="comments" class="comments">
+        <h2>Коментарі <span class="count">{{ comments|length }}</span></h2>
+        {% for comment in comments %}
+          <div class="comment">
+            <div class="comment-head"><strong>{{ comment.author.name }}</strong>
+              <time class="muted" datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:"j E, H:i" }}</time></div>
+            <p>{{ comment.text|linebreaksbr }}</p>
+          </div>
+        {% empty %}
+          <p class="muted">Поки що ніхто не коментував.</p>
+        {% endfor %}
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'events:comment_add' event.public_id %}" class="comment-form">
+            {% csrf_token %}
+            {{ comment_form.text }}
+            <button type="submit" class="btn">Надіслати</button>
+          </form>
+        {% else %}
+          <p class="muted"><a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Увійдіть</a>, щоб коментувати.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="event-side">
+      <div class="panel">
+        <div class="side-date">
+          <span class="date-day big">{{ event.starts_at|date:"j" }}</span>
+          <div><div class="side-month">{{ event.starts_at|date:"E Y" }}</div>
+          <div class="muted">{{ event.starts_at|date:"l, H:i" }}</div></div>
+        </div>
+        <div class="seats">
+          <div class="seats-num">вільно <strong>{{ free }}</strong> з {{ event.capacity }}</div>
+          <div class="seats-bar"><span style="width: {% widthratio taken event.capacity 100 %}%"></span></div>
+        </div>
+
+        {% if is_author %}
+          <p class="muted small">Ви організатор цієї події.</p>
+        {% elif not user.is_authenticated %}
+          <a class="btn btn-accent btn-block" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Увійти, щоб піти</a>
+        {% elif is_registered %}
+          <p class="going">✓ Ви йдете</p>
+          {% if not is_past %}
+          <form method="post" action="{% url 'events:unregister' event.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-block">Скасувати</button>
+          </form>
+          {% endif %}
+        {% elif is_past %}
+          <p class="muted small">Запис закрито.</p>
+        {% elif free == 0 %}
+          <p class="muted small">Місць немає.</p>
+        {% else %}
+          <form method="post" action="{% url 'events:register' event.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-accent btn-block">Іду!</button>
+          </form>
+        {% endif %}
+      </div>
+
+      {% if is_author %}
+        <div class="panel">
+          <h3>Керування</h3>
+          <div class="actions">
+            <a class="btn btn-ghost" href="{% url 'events:edit' event.public_id %}">Редагувати</a>
+            <a class="btn btn-danger" href="{% url 'events:delete' event.public_id %}">Видалити</a>
+          </div>
+          {% if invite_url %}
+            <label class="small" for="invite">Інвайт-посилання</label>
+            <input id="invite" class="invite" type="text" readonly value="{{ invite_url }}" onclick="this.select()">
+            <form method="post" action="{% url 'events:regenerate_invite' event.public_id %}">
+              {% csrf_token %}
+              <button type="submit" class="linklike small">Перегенерувати (старе перестане працювати)</button>
+            </form>
+          {% endif %}
+        </div>
+        <div class="panel">
+          <h3>Учасники <span class="count">{{ taken }}</span></h3>
+          {% if participants %}
+            <ul class="participants">
+              {% for reg in participants %}
+                <li><strong>{{ reg.user.name }}</strong><span class="muted small">{{ reg.user.email }}</span></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted small">Ще ніхто не записався.</p>
+          {% endif %}
+        </div>
+      {% endif %}
+    </aside>
+  </div>
+</article>
+{% endblock %}

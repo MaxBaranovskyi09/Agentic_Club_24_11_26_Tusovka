@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Видалити подію{% endblock %}
+{% block content %}
+<section class="form-page narrow">
+  <h1>Видалити подію?</h1>
+  <p>«<strong>{{ event.title }}</strong>» буде видалено разом із записами учасників і коментарями. Цю дію не можна скасувати.</p>
+  <form method="post" class="actions">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Так, видалити</button>
+    <a class="btn btn-ghost" href="{% url 'events:detail' event.public_id %}">Ні, залишити</a>
+  </form>
+</section>
+{% endblock %}

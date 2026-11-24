@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Мій профіль{% endblock %}
+{% block content %}
+<section class="profile-head">
+  <h1>{{ user.name }}</h1>
+  <p class="muted">{{ user.email }}</p>
+</section>
+
+<section class="profile-section">
+  <h2>Я створив <span class="count">{{ created|length }}</span></h2>
+  {% if created %}
+    <ul class="list">
+      {% for event in created %}
+        <li class="list-row">
+          <a href="{% url 'events:detail' event.public_id %}">{{ event.title }}</a>
+          <span class="muted small">{{ event.starts_at|date:"j E Y, H:i" }}</span>
+          {% if event.is_private %}<span class="tag tag-private">приватна</span>{% endif %}
+          {% if event.starts_at <= now %}<span class="tag">минула</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Ви ще не створили жодної події. <a href="{% url 'events:create' %}">Створити?</a></p>
+  {% endif %}
+</section>
+
+<section class="profile-section">
+  <h2>Я йду <span class="count">{{ registered|length }}</span></h2>
+  {% if registered %}
+    <ul class="list">
+      {% for event in registered %}
+        <li class="list-row">
+          <a href="{% url 'events:detail' event.public_id %}">{{ event.title }}</a>
+          <span class="muted small">{{ event.starts_at|date:"j E Y, H:i" }} · {{ event.author.name }}</span>
+          {% if event.starts_at <= now %}<span class="tag">минула</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Ви ще нікуди не записались. <a href="{% url 'events:home' %}">Подивитись події</a></p>
+  {% endif %}
+</section>
+{% endblock %}

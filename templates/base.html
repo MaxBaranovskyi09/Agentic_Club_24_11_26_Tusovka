@@ -1,0 +1,47 @@
+{% load static %}<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Тусовка{% endblock %} · Тусовка</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="logo" href="{% url 'events:home' %}">тусовка<span class="logo-dot">.</span></a>
+      <nav class="nav">
+        {% if user.is_authenticated %}
+          <a class="btn btn-accent btn-sm" href="{% url 'events:create' %}">+ Подія</a>
+          <a class="nav-link" href="{% url 'events:profile' %}">{{ user.name }}</a>
+          <form method="post" action="{% url 'accounts:logout' %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="nav-link linklike">Вийти</button>
+          </form>
+        {% else %}
+          <a class="nav-link" href="{% url 'accounts:login' %}">Увійти</a>
+          <a class="btn btn-sm" href="{% url 'accounts:signup' %}">Реєстрація</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap main">
+    {% if messages %}
+      <ul class="flash-list" role="status">
+        {% for message in messages %}
+          <li class="flash flash-{{ message.tags|default:'info' }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">Тусовка — збирайтеся разом. Час — Київ.</div>
+  </footer>
+</body>
+</html>

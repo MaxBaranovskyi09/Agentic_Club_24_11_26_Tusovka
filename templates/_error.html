@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block content %}
+<section class="error-page">
+  <p class="error-code">{% block code %}{% endblock %}</p>
+  <h1>{% block heading %}{% endblock %}</h1>
+  <p class="muted">{% block text %}{% endblock %}</p>
+  <a class="btn" href="{% url 'events:home' %}">На головну</a>
+</section>
+{% endblock %}

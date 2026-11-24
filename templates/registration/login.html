@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Вхід{% endblock %}
+{% block content %}
+<section class="auth-card">
+  <h1>Вхід</h1>
+  <form method="post" class="form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="flash flash-error">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+    {% for field in form %}<div class="field{% if field.errors %} has-error{% endif %}">{{ field.as_field_group }}</div>{% endfor %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn btn-accent btn-block">Увійти</button>
+  </form>
+  <p class="muted small">Ще немає акаунта? <a href="{% url 'accounts:signup' %}">Зареєструватися</a></p>
+</section>
+{% endblock %}
