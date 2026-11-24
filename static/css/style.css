@@ -31,7 +31,7 @@ body {
   display: flex;
   flex-direction: column;
 }
-main { flex: 1; }
+main { flex: 1; overflow-x: clip; }
 a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; }
 a:hover { color: var(--accent-ink); }
 h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; letter-spacing: -.01em; margin: 0 0 .6em; }
@@ -187,4 +187,81 @@ input[type=checkbox] { width: 1.15rem; height: 1.15rem; accent-color: var(--acce
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+}
+
+/* ================= Лендінг ================= */
+.eyebrow { font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; color: var(--accent-ink); margin: 0 0 .8rem; }
+.eyebrow-light { color: #ffb59c; }
+.btn-lg { padding: .95rem 1.6rem; font-size: 1.05rem; }
+.hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+.hero-compact { border-bottom: 0; margin-bottom: 1.5rem; }
+
+.landing-hero { position: relative; padding: 2.5rem 0 3rem; }
+.poster-title { font-family: var(--font-display); font-weight: 800; font-size: clamp(3rem, 10.5vw, 8.2rem); line-height: .92; letter-spacing: -.045em; margin: 0 0 1.6rem; text-transform: uppercase; }
+.poster-title .line { display: block; animation: rise .7s cubic-bezier(.2, .8, .2, 1) both; }
+.poster-title .line:nth-child(2) { animation-delay: .08s; }
+.poster-title .line:nth-child(3) { animation-delay: .16s; }
+.poster-title .line:nth-child(4) { animation-delay: .24s; }
+.line-accent { color: var(--accent); }
+.line-outline { color: var(--paper); text-shadow: -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink), 2px 2px 0 var(--ink), 0 2px 0 var(--ink), 0 -2px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink); }
+.hero-lead { font-size: clamp(1.05rem, 1.6vw, 1.25rem); max-width: 560px; color: var(--ink-2); margin: 0 0 1.8rem; }
+@keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+
+.sticker { position: absolute; z-index: 1; font: 800 .85rem/1 var(--font-display); text-transform: uppercase; padding: .75rem 1rem; border: 2px solid var(--ink); border-radius: 999px; box-shadow: 3px 3px 0 var(--ink); }
+.sticker-a { right: 4%; top: 18%; background: #ffd23f; transform: rotate(8deg); }
+.sticker-b { right: 16%; top: 52%; background: #b8e0d2; transform: rotate(-6deg); }
+
+/* Бігучий рядок */
+.marquee { overflow: hidden; margin: 0 calc(50% - 50vw) 3rem; background: var(--ink); color: var(--paper); border-block: 2px solid var(--ink); transform: rotate(-1.2deg); }
+.marquee-track { display: flex; gap: 1.4rem; width: max-content; padding: .9rem 0; font: 700 1.25rem var(--font-display); text-transform: uppercase; white-space: nowrap; animation: marquee 32s linear infinite; }
+.marquee .star { color: var(--accent); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* Найближча подія */
+.featured { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); border: 2px solid var(--ink); border-radius: 22px; overflow: hidden; background: var(--card); box-shadow: 8px 8px 0 var(--ink); margin-bottom: 4rem; }
+.featured-info { padding: 2rem 2rem 2.2rem; display: flex; flex-direction: column; gap: .9rem; align-items: flex-start; }
+.featured-info .eyebrow { margin: 0; }
+.featured-info .seats { width: 100%; max-width: 320px; margin: 0; }
+.featured-date { display: flex; align-items: center; gap: .8rem; }
+.fd-day { font: 800 4.2rem/1 var(--font-display); color: var(--accent); }
+.fd-rest { font-weight: 700; line-height: 1.3; }
+.featured-title { font-size: clamp(1.6rem, 3vw, 2.3rem); margin: 0; overflow-wrap: anywhere; }
+.featured-info .muted { margin: 0; }
+.countdown-box { display: flex; flex-direction: column; background: var(--paper-2); border: 2px dashed var(--ink); border-radius: 12px; padding: .5rem .9rem; }
+.countdown { font: 800 1.5rem var(--font-display); font-variant-numeric: tabular-nums; }
+.featured-media { position: relative; min-height: 340px; border-left: 2px solid var(--ink); display: grid; place-items: center; background: repeating-linear-gradient(-45deg, #ffd23f 0 22px, #ffc21a 22px 44px); overflow: hidden; }
+.featured-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.featured:hover .featured-media img { transform: scale(1.04); }
+.featured-letter { font: 800 clamp(8rem, 18vw, 14rem)/1 var(--font-display); color: var(--accent); text-shadow: 6px 6px 0 var(--ink); }
+.stamp { position: absolute; right: 1.2rem; bottom: 1.2rem; background: var(--accent); color: #fff; font: 800 1rem var(--font-display); text-transform: uppercase; padding: 1.1rem .9rem; border: 2px solid var(--ink); border-radius: 50%; aspect-ratio: 1; display: grid; place-items: center; transform: rotate(-14deg); box-shadow: 3px 3px 0 var(--ink); }
+
+/* Приватні події */
+.private-promo { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2.5rem; align-items: center; background: var(--ink); color: var(--paper); border-radius: 22px; padding: 2.8rem; margin-bottom: 4rem; }
+.private-promo h2 { font-size: clamp(1.8rem, 3.6vw, 2.8rem); }
+.checks { list-style: none; padding: 0; margin: 0 0 1.8rem; display: grid; gap: .6rem; }
+.checks li { padding-left: 1.8rem; position: relative; color: #e9e1d2; }
+.checks li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--ink); background: #ffd23f; width: 1.3rem; height: 1.3rem; border-radius: 50%; display: grid; place-items: center; font-size: .8rem; font-weight: 800; }
+.ticket { display: flex; transform: rotate(3deg); filter: drop-shadow(6px 6px 0 var(--accent)); transition: transform .3s ease; }
+.ticket:hover { transform: rotate(0deg) scale(1.02); }
+.ticket-main { flex: 1; background: var(--paper); color: var(--ink); padding: 1.6rem; border-radius: 16px 0 0 16px; display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.ticket-label { font: 800 .75rem var(--font-display); letter-spacing: .2em; color: var(--accent); }
+.ticket-title { font: 800 1.35rem/1.15 var(--font-display); }
+.ticket-meta { color: var(--muted); font-weight: 600; }
+.ticket-link { margin-top: .6rem; background: var(--paper-2); border: 1px dashed var(--ink-2); padding: .45rem .6rem; border-radius: 8px; font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticket-stub { width: 92px; background: #ffd23f; color: var(--ink); border-radius: 0 16px 16px 0; border-left: 3px dashed var(--ink); display: grid; place-items: center; text-align: center; font: 800 .8rem/1.2 var(--font-display); text-transform: uppercase; }
+
+/* Список подій */
+.events-section { scroll-margin-top: 80px; }
+.section-head { display: flex; justify-content: space-between; align-items: end; gap: 1rem 2rem; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--ink); }
+.section-title { font-size: clamp(1.5rem, 3vw, 2.2rem); margin: 0; }
+.section-head .search { flex: 1; max-width: 440px; }
+
+@media (max-width: 860px) {
+  .featured, .private-promo { grid-template-columns: 1fr; }
+  .featured-media { border-left: 0; border-top: 2px solid var(--ink); min-height: 220px; order: -1; }
+  .private-promo { padding: 2rem 1.4rem; }
+  .sticker { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track, .poster-title .line { animation: none; }
 }

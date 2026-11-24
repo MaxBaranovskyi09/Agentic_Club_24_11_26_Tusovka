@@ -39,6 +39,26 @@ python manage.py runserver
 
 Відкрийте http://127.0.0.1:8000/.
 
+> `collectstatic` для локального запуску не потрібен — статику віддає WhiteNoise напряму
+> (і з `DEBUG=True`, і з `DEBUG=False`). У проді `collectstatic` виконується стартовою командою
+> і додає хешовані імена файлів для кешування.
+
+### Швидка перевірка з чистого клону
+
+```bash
+git clone https://github.com/MaxBaranovskyi09/agentic_club_tusovka.git
+cd agentic_club_tusovka
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8000
+```
+
+Якщо `.env` відсутній, застосунок усе одно стартує: `DATABASE_URL` за замовчуванням —
+`postgres://tusovka:tusovka@localhost:5432/tusovka` (користувач і БД з кроку 1), а `SECRET_KEY`
+генерується один раз у файл `.secret_key` (він у `.gitignore`). У проді обидві змінні задавайте явно.
+
 Згенерувати SECRET_KEY:
 
 ```bash
@@ -58,13 +78,14 @@ pytest
 
 | Змінна | Обовʼязкова | За замовчуванням | Опис |
 |---|---|---|---|
-| `SECRET_KEY` | так | — | Секретний ключ Django. Довгий випадковий рядок. |
+| `SECRET_KEY` | так (прод) | генерується в `.secret_key` | Секретний ключ Django. Довгий випадковий рядок. Без змінної ключ створюється локально один раз. |
 | `DEBUG` | ні | `False` | Режим налагодження. У проді — тільки `False`. |
-| `DATABASE_URL` | так | — | `postgres://user:pass@host:5432/db`. На Railway підставляється з плагіна Postgres. |
-| `ALLOWED_HOSTS` | так (прод) | порожньо | Список хостів через кому, напр. `.up.railway.app`. |
+| `DATABASE_URL` | так (прод) | `postgres://tusovka:tusovka@localhost:5432/tusovka` | `postgres://user:pass@host:5432/db`. На Railway підставляється з плагіна Postgres. |
+| `ALLOWED_HOSTS` | так (прод) | `DEBUG=True`: `*`; інакше `localhost,127.0.0.1,0.0.0.0,[::1]` | Список хостів через кому, напр. `.up.railway.app`. |
 | `CSRF_TRUSTED_ORIGINS` | так (прод) | порожньо | Origins через кому, напр. `https://*.up.railway.app`. |
 | `MEDIA_ROOT` | ні | `./media` | Каталог для обкладинок. На Railway — `/data/media` (volume). |
 | `USE_X_FORWARDED_FOR` | ні | `False` | Брати IP клієнта з останнього значення `X-Forwarded-For` (для rate limit). Вмикати лише за довіреним проксі (Railway). |
+| `SECURE_COOKIES` | ні | `not DEBUG` | Прапорець Secure для cookie сесії та CSRF. Вимикайте (`False`) лише для локальної перевірки з `DEBUG=False` по plain HTTP. |
 | `SECURE_SSL_REDIRECT` | ні | `False` | Редірект HTTP → HTTPS. |
 | `SECURE_HSTS_SECONDS` | ні | `0` | HSTS. Вмикайте (напр. `31536000`), коли впевнені, що сайт працює лише по HTTPS. |
 | `LOG_LEVEL` | ні | `INFO` | Рівень логування (логи йдуть у stdout). |

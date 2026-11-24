@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
+from django.db.models import Count
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -30,10 +31,20 @@ def home(request):
         .select_related("author")
         .order_by("starts_at", "pk")
     )
+    context = {"q": q}
     if q:
         events = events.filter(title__icontains=q)
     page = Paginator(events, PAGE_SIZE).get_page(request.GET.get("page"))
-    return render(request, "events/home.html", {"page": page, "q": q})
+    context["page"] = page
+    # Лендінг-блоки показуємо лише на першій сторінці без пошуку.
+    context["show_landing"] = not q and page.number == 1
+    if context["show_landing"]:
+        # Береться з того ж запиту (лише публічні майбутні) — приватні сюди не потрапляють.
+        featured = events.annotate(taken=Count("registrations")).first()
+        if featured:
+            context["featured"] = featured
+            context["featured_free"] = max(featured.capacity - featured.taken, 0)
+    return render(request, "events/home.html", context)
 
 
 @login_required
@@ -111,11 +122,15 @@ def event_edit(request, public_id):
 @login_required
 @require_http_methods(["GET", "POST"])
 def event_delete(request, public_id):
-    event = get_editable_event(request.user, public_id)
     if request.method == "POST":
-        event.delete()
+        with transaction.atomic():
+            # Блокуємо подію: паралельний запис не вставить Registration між збором
+            # каскадних обʼєктів і DELETE (інакше — порушення FK і 500).
+            event = get_editable_event(request.user, public_id, for_update=True)
+            event.delete()
         messages.success(request, "Подію видалено.")
         return redirect("events:profile")
+    event = get_editable_event(request.user, public_id)
     return render(request, "events/event_confirm_delete.html", {"event": event})
 
 
@@ -153,10 +168,14 @@ def comment_add(request, public_id):
     if not ratelimit.throttle("comment", settings.COMMENT_RATE_LIMIT_SECONDS, str(request.user.pk)):
         messages.error(request, "Занадто часто. Зачекайте кілька секунд перед наступним коментарем.")
         return redirect("events:detail", public_id=event.public_id)
-    comment = form.save(commit=False)
-    comment.event = event
-    comment.author = request.user
-    comment.save()
+    with transaction.atomic():
+        # Блокуємо рядок події (і повторно перевіряємо доступ): якщо подію щойно
+        # видалили або закрили — 404, а не IntegrityError/500.
+        event = get_viewable_event(request.user, public_id, for_update=True)
+        comment = form.save(commit=False)
+        comment.event = event
+        comment.author = request.user
+        comment.save()
     messages.success(request, "Коментар додано.")
     return redirect(reverse("events:detail", kwargs={"public_id": event.public_id}) + "#comments")
 

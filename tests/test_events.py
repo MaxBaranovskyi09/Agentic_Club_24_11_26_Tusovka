@@ -214,3 +214,42 @@ def test_custom_404_page(client):
     resp = client.get("/no-such-page/")
     assert resp.status_code == 404
     assert "Сторінку не знайдено" in resp.content.decode()
+
+
+# --- Лендінг ---
+
+def test_landing_featured_is_nearest_public_event(client, author):
+    make_event(author, title="Приватна найближча", is_private=True, starts_at=timezone.now() + timedelta(hours=1))
+    make_event(author, title="Минула", starts_at=timezone.now() - timedelta(hours=1))
+    nearest = make_event(author, title="Публічна найближча", starts_at=timezone.now() + timedelta(hours=5))
+    make_event(author, title="Пізніша", starts_at=timezone.now() + timedelta(days=5))
+    resp = client.get(reverse("events:home"))
+    assert resp.context["featured"] == nearest
+    html = resp.content.decode()
+    assert "Приватна найближча" not in html
+    assert "Найближча тусовка" in html
+
+
+def test_landing_featured_seats(client, author, other):
+    event = make_event(author, capacity=4)
+    Registration.objects.create(event=event, user=other)
+    resp = client.get(reverse("events:home"))
+    assert resp.context["featured_free"] == 3
+
+
+def test_landing_hidden_on_search_and_when_only_private(client, author):
+    make_event(author, title="Секрет", is_private=True)
+    resp = client.get(reverse("events:home"))
+    assert "featured" not in resp.context
+    assert "Секрет" not in resp.content.decode()
+    resp = client.get(reverse("events:home"), {"q": "x"})
+    assert resp.context["show_landing"] is False
+
+
+def test_landing_guest_vs_logged_in(client, author):
+    html = client.get(reverse("events:home")).content.decode()
+    assert "Створити акаунт" in html
+    client.force_login(author)
+    html = client.get(reverse("events:home")).content.decode()
+    assert "Привіт, Автор" in html
+    assert "Створити акаунт" not in html

@@ -20,9 +20,31 @@ env_file = BASE_DIR / ".env"
 if env_file.exists():
     environ.Env.read_env(env_file)
 
-SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+
+
+def _local_secret_key():
+    """Якщо SECRET_KEY не задано (напр. запуск з чистого клону без .env) — генеруємо ключ один раз
+    і зберігаємо у .secret_key (у .gitignore), щоб усі процеси/воркери мали той самий ключ.
+    У проді SECRET_KEY має задаватися змінною середовища."""
+    import logging
+    import secrets
+
+    path = BASE_DIR / ".secret_key"
+    if not path.exists():
+        path.write_text(secrets.token_urlsafe(50))
+        path.chmod(0o600)
+        logging.getLogger(__name__).warning("SECRET_KEY не задано: згенеровано локальний ключ у %s", path)
+    return path.read_text().strip()
+
+
+SECRET_KEY = env("SECRET_KEY", default="") or _local_secret_key()
+
+# Без явного ALLOWED_HOSTS: у DEBUG — будь-який хост (локальна розробка, контейнери),
+# у проді — лише локальні адреси (для публічного домену задайте ALLOWED_HOSTS).
+ALLOWED_HOSTS = env("ALLOWED_HOSTS") or (
+    ["*"] if DEBUG else ["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]
+)
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
@@ -68,7 +90,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {"default": env.db("DATABASE_URL")}
+DATABASES = {
+    "default": env.db(
+        "DATABASE_URL", default="postgres://tusovka:tusovka@localhost:5432/tusovka"
+    )
+}
 DATABASES["default"]["CONN_MAX_AGE"] = 60
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
@@ -108,8 +134,10 @@ MEDIA_URL = "/media-not-served/"
 
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "staticfiles": {"BACKEND": "config.storage.ForgivingManifestStaticFilesStorage"},
 }
+# Віддавати статику і без collectstatic (напр. `runserver` з DEBUG=False одразу після клону).
+WHITENOISE_USE_FINDERS = True
 
 # Обмеження розміру запитів/завантажень.
 COVER_MAX_BYTES = 5 * 1024 * 1024
@@ -122,8 +150,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Безпека ---
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+# Secure-cookie поза DEBUG (вимога ТЗ). SECURE_COOKIES=False — лише для локальної перевірки по HTTP.
+SECURE_COOKIES = env.bool("SECURE_COOKIES", default=not DEBUG)
+SESSION_COOKIE_SECURE = SECURE_COOKIES
+CSRF_COOKIE_SECURE = SECURE_COOKIES
 CSRF_COOKIE_HTTPONLY = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT")

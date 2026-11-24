@@ -1,37 +1,146 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Події{% endblock %}
 {% block content %}
-<section class="hero">
-  <h1 class="hero-title">Куди підемо<br><span class="accent">цього разу?</span></h1>
-  <form method="get" action="{% url 'events:home' %}" class="search" role="search">
-    <input type="search" name="q" value="{{ q }}" maxlength="100" placeholder="Пошук за назвою…" aria-label="Пошук за назвою">
-    <button type="submit" class="btn">Знайти</button>
-  </form>
+
+{% if show_landing %}
+  {% if user.is_authenticated %}
+    <section class="hero hero-compact">
+      <p class="eyebrow">Привіт, {{ user.name }} 👋</p>
+      <h1 class="hero-title">Куди підемо <span class="accent">цього разу?</span></h1>
+      <div class="hero-actions">
+        <a class="btn btn-accent" href="{% url 'events:create' %}">+ Створити подію</a>
+        <a class="btn btn-ghost" href="{% url 'events:profile' %}">Мої події</a>
+      </div>
+    </section>
+  {% else %}
+    <section class="landing-hero">
+      <span class="sticker sticker-a" aria-hidden="true">безкоштовно</span>
+      <span class="sticker sticker-b" aria-hidden="true">без спаму</span>
+      <p class="eyebrow">Сервіс подій для своїх і нових знайомих</p>
+      <h1 class="poster-title">
+        <span class="line">Збирай</span>
+        <span class="line line-accent">своїх.</span>
+        <span class="line line-outline">Знаходь</span>
+        <span class="line">нових.</span>
+      </h1>
+      <p class="hero-lead">Настолки, джеми, пробіжки чи лекція на кухні — створи подію за хвилину, поділись посиланням і дивись, як заповнюються місця.</p>
+      <div class="hero-actions">
+        <a class="btn btn-accent btn-lg" href="{% url 'accounts:signup' %}">Створити акаунт</a>
+        <a class="btn btn-ghost btn-lg" href="#events">Дивитись події ↓</a>
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      {% for _ in "12" %}
+        <span>настолки</span><span class="star">✺</span>
+        <span>джем-сейшни</span><span class="star">✺</span>
+        <span>пробіжки</span><span class="star">✺</span>
+        <span>кіновечори</span><span class="star">✺</span>
+        <span>лекції</span><span class="star">✺</span>
+        <span>пікніки</span><span class="star">✺</span>
+        <span>воркшопи</span><span class="star">✺</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if featured %}
+    <section class="featured" aria-labelledby="featured-title">
+      <div class="featured-info">
+        <p class="eyebrow">Найближча тусовка</p>
+        <div class="featured-date">
+          <span class="fd-day">{{ featured.starts_at|date:"j" }}</span>
+          <span class="fd-rest">{{ featured.starts_at|date:"E" }}<br>{{ featured.starts_at|date:"l, H:i" }}</span>
+        </div>
+        <h2 id="featured-title" class="featured-title">{{ featured.title }}</h2>
+        <p class="muted">Організатор: <strong>{{ featured.author.name }}</strong></p>
+        <div class="countdown-box">
+          <span class="small muted">до старту</span>
+          <span class="countdown" data-countdown="{{ featured.starts_at|date:'c' }}">{{ featured.starts_at|timeuntil }}</span>
+        </div>
+        <div class="seats">
+          <div class="seats-num">вільно <strong>{{ featured_free }}</strong> з {{ featured.capacity }}</div>
+          <div class="seats-bar"><span style="width: {% widthratio featured.taken featured.capacity 100 %}%"></span></div>
+        </div>
+        <a class="btn btn-accent" href="{% url 'events:detail' featured.public_id %}">Детальніше →</a>
+      </div>
+      <a class="featured-media" href="{% url 'events:detail' featured.public_id %}" tabindex="-1" aria-hidden="true">
+        {% if featured.cover %}
+          <img src="{% url 'events:cover' featured.public_id %}" alt="">
+        {% else %}
+          <span class="featured-letter">{{ featured.title|slice:":1"|upper }}</span>
+        {% endif %}
+        <span class="stamp">скоро!</span>
+      </a>
+    </section>
+  {% endif %}
+
+  <section class="private-promo" aria-labelledby="private-title">
+    <div class="private-text">
+      <p class="eyebrow eyebrow-light">Приватні події</p>
+      <h2 id="private-title">Закрита вечірка?<br><span class="accent">Тільки за інвайтом.</span></h2>
+      <ul class="checks">
+        <li>Приватна подія не зʼявляється в списку і пошуку.</li>
+        <li>Потрапити можна лише за секретним посиланням.</li>
+        <li>Посилання витекло? Перегенеруй — старе перестане працювати.</li>
+        <li>Список гостей з контактами бачиш тільки ти.</li>
+      </ul>
+      {% if user.is_authenticated %}
+        <a class="btn btn-accent" href="{% url 'events:create' %}">Створити приватну подію</a>
+      {% else %}
+        <a class="btn btn-accent" href="{% url 'accounts:signup' %}">Спробувати</a>
+      {% endif %}
+    </div>
+    <div class="ticket" aria-hidden="true">
+      <div class="ticket-main">
+        <span class="ticket-label">ІНВАЙТ</span>
+        <span class="ticket-title">День народження Олі</span>
+        <span class="ticket-meta">субота · 19:00 · 12 місць</span>
+        <code class="ticket-link">/invite/x7Kq…9fZ2/</code>
+      </div>
+      <div class="ticket-stub"><span>вхід<br>лише<br>своїм</span></div>
+    </div>
+  </section>
+{% endif %}
+
+<section id="events" class="events-section">
+  <div class="section-head">
+    <h2 class="section-title">{% if q %}Пошук{% else %}Усі майбутні події{% endif %}</h2>
+    <form method="get" action="{% url 'events:home' %}#events" class="search" role="search">
+      <input type="search" name="q" value="{{ q }}" maxlength="100" placeholder="Пошук за назвою…" aria-label="Пошук за назвою">
+      <button type="submit" class="btn">Знайти</button>
+    </form>
+  </div>
+
+  {% if q %}<p class="muted">Результати для «{{ q }}»: {{ page.paginator.count }} · <a href="{% url 'events:home' %}">скинути</a></p>{% endif %}
+
+  {% if page.object_list %}
+    <div class="grid">
+      {% for event in page.object_list %}
+        {% include "events/_event_card.html" %}
+      {% endfor %}
+    </div>
+    {% if page.has_other_pages %}
+      <nav class="pager" aria-label="Сторінки">
+        {% if page.has_previous %}
+          <a class="btn btn-ghost" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}page={{ page.previous_page_number }}#events">← Назад</a>
+        {% endif %}
+        <span class="muted">Сторінка {{ page.number }} з {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+          <a class="btn btn-ghost" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}page={{ page.next_page_number }}#events">Далі →</a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="empty">
+      <p>{% if q %}Нічого не знайдено.{% else %}Поки що майбутніх подій немає — стань першим!{% endif %}</p>
+      {% if user.is_authenticated %}<a class="btn btn-accent" href="{% url 'events:create' %}">Створити подію</a>
+      {% elif not q %}<a class="btn btn-accent" href="{% url 'accounts:signup' %}">Зареєструватися</a>{% endif %}
+    </div>
+  {% endif %}
 </section>
 
-{% if q %}<p class="muted">Результати для «{{ q }}»: {{ page.paginator.count }}</p>{% endif %}
-
-{% if page.object_list %}
-  <div class="grid">
-    {% for event in page.object_list %}
-      {% include "events/_event_card.html" %}
-    {% endfor %}
-  </div>
-  {% if page.has_other_pages %}
-    <nav class="pager" aria-label="Сторінки">
-      {% if page.has_previous %}
-        <a class="btn btn-ghost" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}page={{ page.previous_page_number }}">← Назад</a>
-      {% endif %}
-      <span class="muted">Сторінка {{ page.number }} з {{ page.paginator.num_pages }}</span>
-      {% if page.has_next %}
-        <a class="btn btn-ghost" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}page={{ page.next_page_number }}">Далі →</a>
-      {% endif %}
-    </nav>
-  {% endif %}
-{% else %}
-  <div class="empty">
-    <p>{% if q %}Нічого не знайдено.{% else %}Поки що майбутніх подій немає.{% endif %}</p>
-    {% if user.is_authenticated %}<a class="btn btn-accent" href="{% url 'events:create' %}">Створити першу</a>{% endif %}
-  </div>
-{% endif %}
+<script src="{% static 'js/countdown.js' %}" defer></script>
 {% endblock %}
